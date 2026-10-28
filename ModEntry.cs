@@ -10,8 +10,51 @@ namespace FriendshipIndicator;
 internal sealed class ModEntry : Mod
 {
 
+    class Config
+    {
+        public bool enableChatAlerts = true;
+        public bool enableNpcAlerts = true;
+        public bool enableLossAlerts = true;
+        public bool showSignOnNpcAlerts = true;
+        public bool alwaysChatAlert = false;
+
+        public int minimumChangeChatAlerts = 0;
+        public int minimumChangeNpcAlerts = 0;
+
+        public float npcAlertDurationInSeconds = 1.5f;
+
+        public float npcAlertDistanceToFloatInPixels = 45f;
+        public int npcAlertPercentageStartFade = 0;
+
+        //ADVANCED SETTINGS
+        public string gainedString = "gained";
+        public string lossString = "lost";
+        public string gainedChatAlertPrePlayersNameText = "";
+        public string gainedChatAlertBeforeDifferenceText = " has ";
+
+        public string gainedChatAlertInbetweenDifferenceAndNpcNameText = " friendship with ";
+        public string gainedChatAlertAfterNpcNameText = "!";
+
+        public string gainedNpcAlertIPreText = "";
+        public string gainedNpcAlertIPostText = "";
+
+        public string lossChatAlertPrePlayersNameText = "";
+        public string lossChatAlertBeforeDifferenceText = " has ";
+
+        public string lossChatAlertInbetweenDifferenceAndNpcNameText = " friendship with ";
+        public string lossChatAlertAfterNpcNameText = "!";
+
+        public string lossNpcAlertIPreText = "";
+        public string lossNpcAlertIPostText = "";
+
+        public string metChatAlertPrePlayersNameText = "";
+        public string metChatAlertBetweenNamesText = " has met ";
+        public string metChatAlertAfterNpcNameText = "!";
+    }
     //member varibles
     private readonly List<FloatingText> floatingTexts = new();
+
+    private Config config = new();
     private Dictionary<string, int> friendships = new();
 
     //Constructor/ SMAPI entry point
@@ -80,6 +123,8 @@ internal sealed class ModEntry : Mod
 
         int difference = newValue - originalValue;
 
+        if(difference < 0 && !config.enableLossAlerts) return;
+
         if(originalValue == -1)
         {
             onFriendshipChangeNewFriendship(friendshipName);
@@ -94,22 +139,47 @@ internal sealed class ModEntry : Mod
             onFriendshipChangeOutsideCurrentMapOrUnknown(difference, friendshipName);
         }
     }
-
     private void onFriendshipChangeNewFriendship(string friendshipName)
     {
-        Game1.chatBox.addInfoMessage($"{Game1.player.Name} has met {friendshipName}!");
+        if (!config.enableChatAlerts) return;
+
+        Game1.chatBox.addInfoMessage($"{config.metChatAlertPrePlayersNameText}{Game1.player.Name}{config.metChatAlertBetweenNamesText}{friendshipName}{config.metChatAlertAfterNpcNameText}");
     }
 
     private void onFriendshipChangeCurrentMap(int difference, NPC npc)
     {
-        this.AddChangeText(npc, difference);
+        if (!config.enableNpcAlerts) return;
+
+        if (config.minimumChangeNpcAlerts > Math.Abs(difference)) return;
+
+        string preText;
+        string postText;
+
+        if(difference > 0)
+        {
+            preText = config.gainedNpcAlertIPreText;
+            postText = config.gainedNpcAlertIPostText;
+        } else
+        {
+            preText = config.lossNpcAlertIPreText;
+            postText = config.lossNpcAlertIPostText;
+        }
+
+        this.AddChangeText(npc, difference, preText, postText);
+
+        if (config.alwaysChatAlert && config.minimumChangeChatAlerts <= Math.Abs(difference))
+        {
+            Game1.chatBox.addInfoMessage(this.constructChatAlertString(difference, npc.Name));
+        }
     }
 
     private void onFriendshipChangeOutsideCurrentMapOrUnknown(int difference, string friendshipName)
     {
-        string changeType = difference > 0? "gained" : "lost";
+        if (!config.enableChatAlerts) return;
 
-        Game1.chatBox.addInfoMessage($"{Game1.player.Name} has {changeType} {Math.Abs(difference)} friendship with {friendshipName}!");
+        if (config.minimumChangeChatAlerts > Math.Abs(difference)) return;
+
+        Game1.chatBox.addInfoMessage(this.constructChatAlertString(difference, friendshipName));
     }
 
     private void OnReturnedToTitle(object? sender, ReturnedToTitleEventArgs e)
@@ -118,13 +188,27 @@ internal sealed class ModEntry : Mod
         this.friendships.Clear();
     }
 
+    private string constructChatAlertString(int difference, string friendshipName)
+    {
+        string changeType = difference > 0? config.gainedString : config.lossString;
+
+        if(difference > 0)
+        {
+            return $"{config.gainedChatAlertPrePlayersNameText}{Game1.player.Name}{config.gainedChatAlertBeforeDifferenceText}{changeType} {Math.Abs(difference)}{config.gainedChatAlertInbetweenDifferenceAndNpcNameText}{friendshipName}{config.gainedChatAlertAfterNpcNameText}";
+        } else
+        {
+            return $"{config.lossChatAlertPrePlayersNameText}{Game1.player.Name}{config.lossChatAlertBeforeDifferenceText}{changeType} {Math.Abs(difference)}{config.lossChatAlertInbetweenDifferenceAndNpcNameText}{friendshipName}{config.lossChatAlertAfterNpcNameText}";
+        }
+        
+    }
+
 //-----------------------------------------------------------------------------------------------------------------------------------------------------
 //-----------------------------------------------------------------------------------------------------------------------------------------------------
 // Text Alert Handling
 //-----------------------------------------------------------------------------------------------------------------------------------------------------
 //-----------------------------------------------------------------------------------------------------------------------------------------------------
 
-    private void AddChangeText(NPC npc, int change)
+    private void AddChangeText(NPC npc, int change, string preText, string postText)
     {
         if (change == 0)
             return;
@@ -132,13 +216,19 @@ internal sealed class ModEntry : Mod
         Color color = change > 0 ? Color.LightGreen: Color.IndianRed;
         String sign = change > 0 ? "+" : "-";
 
-        string text = $"{sign}{Math.Abs(change)}";
+        if (!config.showSignOnNpcAlerts)
+        {
+            sign = "";
+        } 
+
+        string text = $"{preText}{sign}{Math.Abs(change)}{postText}";
 
         this.floatingTexts.Add(new FloatingText
         {
             Npc = npc,
             Text = text,
-            Color = color
+            Color = color,
+            Duration = config.npcAlertDurationInSeconds
         });
     }
 
@@ -170,14 +260,16 @@ internal sealed class ModEntry : Mod
         {
 
             float progress = popup.Age / popup.Duration;
-            float opacity = 1f - progress;
+            float fadeStart = config.npcAlertPercentageStartFade / 100f;
+            float normalizeProgress = (progress - fadeStart)/(1f-fadeStart);
+            float opacity = Math.Clamp(1f - normalizeProgress, 0f, 1f);
 
             // Start above the NPC's head.
             Vector2 worldPosition = popup.Npc.Position
                 + new Vector2(32f, -40f);
 
             // Float upward by 45 pixels.
-            worldPosition.Y -= 45f * progress;
+            worldPosition.Y -= config.npcAlertDistanceToFloatInPixels * progress;
 
             Vector2 screenPosition = Game1.GlobalToLocal(
                 Game1.viewport,
