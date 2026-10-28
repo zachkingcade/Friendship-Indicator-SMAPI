@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Pathoschild.Stardew.ModBuildConfig" Version="4.4.0" />
+  </ItemGroup>
+
+  <!-- paths -->
+  <PropertyGroup>
+    <GamePath>/home/zach/softwares/video_games/steam/steamapps/common/Stardew Valley</GamePath>
+    <GameModsPath>/home/zach/softwares/video_games/steam/steamapps/common/Stardew Valley/Mods</GameModsPath>
+    <ModZipPath>/home/zach/softwares/video_games/steam/steamapps/common/Stardew Valley/modzip</ModZipPath>
+  </PropertyGroup>
+
+</Project>

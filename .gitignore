@@ -1,0 +1,64 @@
+
+# ==========================================
+# .NET / C# Build Outputs
+# ==========================================
+**/bin/
+**/obj/
+**/Debug/
+**/Release/
+
+# Compiled assemblies and debug symbols
+*.dll
+*.pdb
+*.exe
+
+# NuGet packages
+*.nupkg
+packages/
+
+# ==========================================
+# VS Code / IDE
+# ==========================================
+.vs/
+.vscode/*
+!.vscode/extensions.json
+
+# Rider / JetBrains
+.idea/
+*.suo
+*.user
+*.sln.docstates
+
+# ==========================================
+# SMAPI / Stardew Valley
+# ==========================================
+# SMAPI logs
+SMAPI-latest.txt
+SMAPI-crash.txt
+smapi-*.txt
+
+# Generated release archives
+*.zip
+
+# ==========================================
+# Operating System
+# ==========================================
+# Linux
+*~
+*.swp
+*.swo
+.Trash-*/
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# macOS
+.DS_Store
+
+# ==========================================
+# Temporary Files
+# ==========================================
+*.tmp
+*.bak
+*.log
