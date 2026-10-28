@@ -7,60 +7,24 @@ using Microsoft.Xna.Framework.Graphics;
 
 
 namespace FriendshipIndicator;
-internal sealed class ModEntry : Mod
+internal sealed partial class ModEntry : Mod
 {
 
-    class Config
-    {
-        public bool enableChatAlerts = true;
-        public bool enableNpcAlerts = true;
-        public bool enableLossAlerts = true;
-        public bool showSignOnNpcAlerts = true;
-        public bool alwaysChatAlert = false;
-
-        public int minimumChangeChatAlerts = 0;
-        public int minimumChangeNpcAlerts = 0;
-
-        public float npcAlertDurationInSeconds = 1.5f;
-
-        public float npcAlertDistanceToFloatInPixels = 45f;
-        public int npcAlertPercentageStartFade = 0;
-
-        //ADVANCED SETTINGS
-        public string gainedString = "gained";
-        public string lossString = "lost";
-        public string gainedChatAlertPrePlayersNameText = "";
-        public string gainedChatAlertBeforeDifferenceText = " has ";
-
-        public string gainedChatAlertInbetweenDifferenceAndNpcNameText = " friendship with ";
-        public string gainedChatAlertAfterNpcNameText = "!";
-
-        public string gainedNpcAlertIPreText = "";
-        public string gainedNpcAlertIPostText = "";
-
-        public string lossChatAlertPrePlayersNameText = "";
-        public string lossChatAlertBeforeDifferenceText = " has ";
-
-        public string lossChatAlertInbetweenDifferenceAndNpcNameText = " friendship with ";
-        public string lossChatAlertAfterNpcNameText = "!";
-
-        public string lossNpcAlertIPreText = "";
-        public string lossNpcAlertIPostText = "";
-
-        public string metChatAlertPrePlayersNameText = "";
-        public string metChatAlertBetweenNamesText = " has met ";
-        public string metChatAlertAfterNpcNameText = "!";
-    }
     //member varibles
     private readonly List<FloatingText> floatingTexts = new();
 
-    private Config config = new();
+    private ModConfig config = new();
     private Dictionary<string, int> friendships = new();
 
     //Constructor/ SMAPI entry point
     public override void Entry(IModHelper helper)
     {
+        this.config = helper.ReadConfig<ModConfig>();
+
+        helper.Events.GameLoop.GameLaunched += this.OnGameLaunched;
+
         //Game State Events
+        helper.Events.GameLoop.GameLaunched += this.OnGameLaunched;
         helper.Events.GameLoop.SaveLoaded += this.OnSaveLoaded;
         helper.Events.GameLoop.ReturnedToTitle += this.OnReturnedToTitle;
         
@@ -167,7 +131,7 @@ internal sealed class ModEntry : Mod
 
         this.AddChangeText(npc, difference, preText, postText);
 
-        if (config.alwaysChatAlert && config.minimumChangeChatAlerts <= Math.Abs(difference))
+        if (config.alwaysChatAlert && config.minimumChangeChatAlerts <= Math.Abs(difference) && config.enableChatAlerts)
         {
             Game1.chatBox.addInfoMessage(this.constructChatAlertString(difference, npc.Name));
         }
@@ -258,8 +222,8 @@ internal sealed class ModEntry : Mod
 
         foreach (var popup in this.floatingTexts)
         {
-
-            float progress = popup.Age / popup.Duration;
+            //REMINDER: the clamps here prevent devision by 0, very important
+            float progress = Math.Clamp(popup.Age / popup.Duration, 0f, 1f);
             float fadeStart = config.npcAlertPercentageStartFade / 100f;
             float normalizeProgress = (progress - fadeStart)/(1f-fadeStart);
             float opacity = Math.Clamp(1f - normalizeProgress, 0f, 1f);

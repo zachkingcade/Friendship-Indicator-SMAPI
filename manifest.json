@@ -1,10 +1,16 @@
 {
   "Name": "Friendship Indicator",
   "Author": "Zachary Kingcade",
-  "Version": "1.0.0",
+  "Version": "1.1.0",
   "Description": "Indicates to the player when their friendship with an NPC changes at all. Either in the form of a number above the NPCS head if they are on the current map or a message in the chat if they are not.",
   "UniqueID": "ZachKingcade.FriendshipIndicator",
   "EntryDll": "FriendshipIndicator.dll",
   "MinimumApiVersion": "4.0.0",
-  "UpdateKeys": []
+  "UpdateKeys": [],
+  "Dependencies": [
+    {
+        "UniqueID": "spacechase0.GenericModConfigMenu",
+        "IsRequired": false
+    }
+]
 }
