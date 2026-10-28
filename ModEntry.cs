@@ -10,30 +10,28 @@ namespace FriendshipIndicator;
 internal sealed class ModEntry : Mod
 {
 
-    private class FloatingText
-    {
-        public NPC Npc { get; init; } = null!;
-        public string Text { get; init; } = "";
-        public Color Color { get; init; }
-
-        public float Age { get; set; } = 0f;
-        public float Duration { get; init; } = 1.5f;
-    }
-
+    //member varibles
     private readonly List<FloatingText> floatingTexts = new();
-
     private Dictionary<string, int> friendships = new();
+
+    //Constructor/ SMAPI entry point
     public override void Entry(IModHelper helper)
     {
+        //Game State Events
         helper.Events.GameLoop.SaveLoaded += this.OnSaveLoaded;
-        helper.Events.GameLoop.UpdateTicked += this.OnUpdateTicked;
         helper.Events.GameLoop.ReturnedToTitle += this.OnReturnedToTitle;
+        
+        //Update Events
+        helper.Events.GameLoop.UpdateTicked += this.OnUpdateTicked;
         helper.Events.Display.RenderedWorld += this.OnRenderedWorld;
         helper.Events.GameLoop.UpdateTicked += this.UpdateFloatingTexts;
-
-        // Subscribe to an event that happens after a save loads.
-        helper.Events.GameLoop.SaveLoaded += this.OnSaveLoaded;
     }
+
+//-----------------------------------------------------------------------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------------------------------------------------------------------------
+// Friendship Handling
+//-----------------------------------------------------------------------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------------------------------------------------------------------------
 
     private void OnSaveLoaded(object? sender, SaveLoadedEventArgs e)
     {
@@ -114,6 +112,18 @@ internal sealed class ModEntry : Mod
         Game1.chatBox.addInfoMessage($"{Game1.player.Name} has {changeType} {Math.Abs(difference)} friendship with {friendshipName}!");
     }
 
+    private void OnReturnedToTitle(object? sender, ReturnedToTitleEventArgs e)
+    {
+        //We clear in case they open another save file, we don't want to keep a previous saves friendship points
+        this.friendships.Clear();
+    }
+
+//-----------------------------------------------------------------------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------------------------------------------------------------------------
+// Text Alert Handling
+//-----------------------------------------------------------------------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------------------------------------------------------------------------
+
     private void AddChangeText(NPC npc, int change)
     {
         if (change == 0)
@@ -130,12 +140,6 @@ internal sealed class ModEntry : Mod
             Text = text,
             Color = color
         });
-    }
-
-    private void OnReturnedToTitle(object? sender, ReturnedToTitleEventArgs e)
-    {
-        //We clear in case they open another save file, we don't want to keep a previous saves friendship points
-        this.friendships.Clear();
     }
 
     
